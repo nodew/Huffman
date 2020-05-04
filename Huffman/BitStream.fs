@@ -1,4 +1,5 @@
-﻿module BitStream
+﻿module Huffman.BitStream
+
 open System
 open System.IO
 open System.Collections

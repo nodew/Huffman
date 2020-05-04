@@ -2,7 +2,7 @@
 open Huffman.Decoding
 
 let printUsage () =
-    printfn "%s" @"Usage: Huffman.exe [--help] [command <args>]
+    printfn "%s" @"Usage: hf.exe [--help] [command <args>]
 Commands:
     encode <file> <output>              encode a file, write result to output
     deocde <file> <output>              decode a file, write result to output

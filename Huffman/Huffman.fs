@@ -1,7 +1,6 @@
 ﻿namespace Huffman
 
 open System
-open System.Collections
 
 type FreqTable<'a> when 'a: comparison 
     = Map<'a, int>

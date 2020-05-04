@@ -1,8 +1,6 @@
 ﻿namespace Huffman
 
-open System
 open System.IO
-open System.Collections
 open BitStream
 
 module Decoding =

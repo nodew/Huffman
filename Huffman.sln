@@ -5,6 +5,11 @@ VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Huffman", "Huffman\Huffman.fsproj", "{6480D62E-E5C1-470A-88EF-37FBFCD37AD3}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Huffman.Console", "Huffman.Console\Huffman.Console.fsproj", "{8DE7F555-EB98-4771-9506-4065DD97DE2C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6480D62E-E5C1-470A-88EF-37FBFCD37AD3} = {6480D62E-E5C1-470A-88EF-37FBFCD37AD3}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +20,10 @@ Global
 		{6480D62E-E5C1-470A-88EF-37FBFCD37AD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6480D62E-E5C1-470A-88EF-37FBFCD37AD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6480D62E-E5C1-470A-88EF-37FBFCD37AD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DE7F555-EB98-4771-9506-4065DD97DE2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DE7F555-EB98-4771-9506-4065DD97DE2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DE7F555-EB98-4771-9506-4065DD97DE2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DE7F555-EB98-4771-9506-4065DD97DE2C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

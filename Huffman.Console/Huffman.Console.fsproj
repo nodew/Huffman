@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <AssemblyName>hf</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="BitStream.fs" />
-    <Compile Include="PriorityQueue.fs" />
-    <Compile Include="Huffman.fs" />
-    <Compile Include="Encoding.fs" />
-    <Compile Include="Decoding.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Huffman\Huffman.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
