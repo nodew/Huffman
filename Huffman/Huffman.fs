@@ -76,7 +76,7 @@ module HuffmanTree =
             match PriorityQueue.pop pQueue' with
             | (None, _) -> Some x1
             | (Some x2, pQueue'') ->
-                let combinedNode = mergeWHT x1 x2
+                let combinedNode = mergeWHT x2 x1
 
                 let newPQueue =
                     PriorityQueue.insert combinedNode pQueue''

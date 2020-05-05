@@ -3,6 +3,10 @@
 type PQueue<'a when 'a: comparison> =
     | PQEmpty
     | PQNode of Value: 'a * Left: PQueue<'a> * Right: PQueue<'a>
+    override x.ToString () =
+        match x with
+        | PQEmpty -> ""
+        | PQNode(v, lt, rt) -> v.ToString() + " (" + lt.ToString() + " " + rt.ToString() + ")"
 
 [<RequireQualifiedAccess>]
 module PriorityQueue =
@@ -14,7 +18,7 @@ module PriorityQueue =
         | (PQEmpty, _) -> pB
         | (_, PQEmpty) -> pA
         | (PQNode (a, lA, rA), PQNode (b, lB, rB)) ->
-            if a < b then PQNode(a, merge rA pB, lA) else PQNode(b, merge rB pA, lB)
+            if a < b then PQNode(a, merge rA pB, lA) else PQNode(b, merge pA lB, rB)
 
     let insert value queue = merge queue (mkNode value)
 
