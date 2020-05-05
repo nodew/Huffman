@@ -19,7 +19,7 @@ module Encoding =
 
         toBytes tree
 
-    let private analysisStream (stream: Stream) =
+    let analysisStream (stream: Stream) =
         let mutable frequence: FreqTable<byte> = Map.empty
         while stream.Position < stream.Length do
             let word = byte (stream.ReadByte())
@@ -29,7 +29,7 @@ module Encoding =
                 | Some count -> frequence |> Map.add word (count + 1)
         match HuffmanTree.fromFreqTable frequence with
         | Some tree -> Ok(tree, frequence)
-        | None -> Result.Error "Can't build huffman tree from input"
+        | None -> Error "Can't build huffman tree from input"
 
     let private encodeStream'
         (reader: Stream)

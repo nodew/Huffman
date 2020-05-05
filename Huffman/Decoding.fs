@@ -5,13 +5,13 @@ open System.Text
 open BitStream
 
 module Decoding =
-    let buildHuffmanTree (bs: BitReader ref) =
+    let private buildHuffmanTree (bs: BitReader) =
         let rec buildTree () =
-            let bit = bs.Value.ReadBit()
+            let bit = bs.ReadBit()
             if not bit then
                 HuffmanTree.merge (buildTree ()) (buildTree ())
             else
-                let byte = bs.Value.ReadByte()
+                let byte = bs.ReadByte()
                 HuffmanTree.from byte
 
         buildTree ()
@@ -19,7 +19,7 @@ module Decoding =
     let private decodeStream' (inputStream: BitReader) (outputStream: Stream) =
 
         // Read version
-        let _ = inputStream.ReadByte()
+        inputStream.ReadByte() |> ignore
 
         // Read the original file length
         let originalLength = inputStream.ReadUInt64()
@@ -28,7 +28,7 @@ module Decoding =
         let encodedLength = inputStream.ReadUInt64()
 
         // Build huffman tree from input stream
-        let huffmanTree = buildHuffmanTree (ref inputStream)
+        let huffmanTree = buildHuffmanTree inputStream
 
         // Decode content
         let mutable huffmanTree' = huffmanTree
@@ -48,7 +48,7 @@ module Decoding =
                     | false -> lt
                     | true -> rt
 
-        if originalLength = contentLength then Result.Ok true else Result.Error "Content mismatch"
+        if originalLength = contentLength then Ok () else Error "Content mismatch"
 
     let decodeStream (stream: 'a :> Stream) =
         use temp = new MemoryStream()
@@ -66,7 +66,7 @@ module Decoding =
     let decodeFile (inputFile: string) (outputFile: string) =
         if not (File.Exists inputFile) then
             sprintf "File %s doesn't exist" inputFile
-            |> Result.Error
+            |> Error
         else
             use inputStream = new BitReader(File.OpenRead(inputFile))
             use outputStream = File.Create(outputFile) :> Stream
