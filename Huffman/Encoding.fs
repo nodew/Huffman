@@ -1,7 +1,9 @@
 ﻿namespace Huffman
 
-open System.IO
 open System.Collections
+open System.IO
+open System.Text
+
 open BitStream
 
 module Encoding =
@@ -12,54 +14,85 @@ module Encoding =
                 let bitArr = new BitArray([| a |])
                 let bits = Array.replicate 8 false
                 bitArr.CopyTo(bits, 0)
-                [true] @ (bits |> Array.toList)
-            | HTNode(lt, rt) ->
-                [false] @ toBytes lt @ toBytes rt
+                [ true ] @ (bits |> Array.toList)
+            | HTNode (lt, rt) -> [ false ] @ toBytes lt @ toBytes rt
+
         toBytes tree
 
-    let analysisFile input =
-        use fs = new BinaryReader(File.OpenRead(input))
+    let private analysisStream (stream: Stream) =
         let mutable frequence: FreqTable<byte> = Map.empty
-        while (fs.BaseStream.Position < fs.BaseStream.Length) do
-            let word = fs.ReadByte()
-            frequence <- match Map.tryFind word frequence with
-                         | None -> frequence |> Map.add word 1
-                         | Some count -> frequence |> Map.add word (count + 1)
+        while stream.Position < stream.Length do
+            let word = byte (stream.ReadByte())
+            frequence <-
+                match Map.tryFind word frequence with
+                | None -> frequence |> Map.add word 1
+                | Some count -> frequence |> Map.add word (count + 1)
         match HuffmanTree.fromFreqTable frequence with
-        | Some tree -> Some(tree, frequence)
-        | _ -> None
-    
-    let encodeFile (inputFile: string) (outputFile: string) = 
-        match analysisFile inputFile with
-        | Some(tree, frequence)->
-            let encodingTable = HuffmanCodeTable.fromHuffmanTree tree
-            use inputStream = new BinaryReader(File.OpenRead(inputFile))
-            use outputStream = new BitWriter(File.Create(outputFile))
-            let version = byte(0);
-            let orinalLength = uint64(inputStream.BaseStream.Length) * (uint64)8
-            let encodedLength = HuffmanCodeTable.getSize frequence encodingTable
+        | Some tree -> Ok(tree, frequence)
+        | None -> Result.Error "Can't build huffman tree from input"
 
-            // write version
-            outputStream.WriteByte(version)
+    let private encodeStream'
+        (reader: Stream)
+        (writer: BitWriter)
+        ((tree: HuffmanTree<byte>), (frequence: FreqTable<byte>))
+        =
+        let encodingTable = HuffmanCodeTable.fromHuffmanTree tree
+        let version = byte (0)
+        let orinalLength = uint64 (reader.Length) * (uint64) 8
 
-            // write orignal file length
-            outputStream.WriteUInt64(orinalLength)
+        let encodedLength =
+            HuffmanCodeTable.getSize frequence encodingTable
 
-            // write encoded content length
-            outputStream.WriteUInt64(encodedLength)
+        // write version
+        writer.WriteByte(version)
 
-            // write huffman tree
-            outputStream.WriteBits(encodeHuffmanTree tree)
+        // write orignal file length
+        writer.WriteUInt64(orinalLength)
 
-            // write encoded content
-            while (inputStream.BaseStream.Position < inputStream.BaseStream.Length) do
-                let word = inputStream.ReadByte()
-                match HuffmanCodeTable.lookup word encodingTable with
-                | Some encoding ->
-                    outputStream.WriteBits(encoding |> List.map (fun x -> x.ToBool()))
-                | _ -> ()
+        // write encoded content length
+        writer.WriteUInt64(encodedLength)
 
-            printfn "Successfully encoded %s into %s" inputFile outputFile
-        | _ -> 
-            printfn "Can't build huffman tree"
+        // write huffman tree
+        writer.WriteBits(encodeHuffmanTree tree)
 
+        let mutable Break = false
+
+        // write encoded content
+        while reader.CanRead && not Break do
+            let word = byte (reader.ReadByte())
+            match HuffmanCodeTable.lookup word encodingTable with
+            | Some encoding -> writer.WriteBits(encoding |> List.map (fun x -> x.ToBool()))
+            | _ -> Break <- true
+
+        if not Break then
+            writer.Complete()
+            Ok()
+        else
+            Error "Unknown error"
+
+    let encodeFile (inputFile: string) (outputFile: string) =
+        if not (File.Exists(inputFile)) then
+            sprintf "%s does't exist" inputFile |> Error
+        else
+            use input = File.OpenRead(inputFile)
+            use writer = new BitWriter(File.Create(outputFile))
+
+            analysisStream input
+            |> Result.map (fun result ->
+                let _ = input.Seek(int64 (0), SeekOrigin.Begin)
+                encodeStream' input writer result)
+
+    let encodeStream (input: 'a :> Stream) =
+        let output = new MemoryStream()
+        use writer = new BitWriter(output)
+        analysisStream input
+        |> Result.map (fun result ->
+            let _ = input.Seek(int64 (0), SeekOrigin.Begin)
+            encodeStream' input writer result)
+        |> Result.map (fun _ -> output.GetBuffer())
+
+    let encodeString (input: string) =
+        use stream =
+            new MemoryStream(Encoding.UTF8.GetBytes(input))
+
+        encodeStream stream

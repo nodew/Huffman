@@ -13,7 +13,15 @@ Options:
 [<EntryPoint>]
 let main argv =
     match argv with
-    | [|"encode"; input; output|] -> encodeFile input output
-    | [|"decode"; input; output|] -> decodeFile input output
+    | [|"encode"; input; output|] ->
+        match encodeFile input output with
+        | Ok _ -> printfn "Encode succeed"
+        | Error err -> printfn "Encode failed: %s" err
+    | [|"decode"; input; output|] ->
+        match decodeFile input output with
+        | Ok _ -> printfn "Decode succeed"
+        | Error err -> printfn "Decode failed: %s" err
+
     | _ -> printUsage ()
+
     0
