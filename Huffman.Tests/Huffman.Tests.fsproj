@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Include="PriorityQueue.fs" />
     <Compile Include="Huffman.fs" />
+    <Compile Include="EncodingAndDecoding.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,5 +28,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
- 
+
 </Project>

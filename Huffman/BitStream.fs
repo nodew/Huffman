@@ -5,14 +5,23 @@ open System.IO
 open System.Collections
 
 let convertBitsToBytes (bits: bool list) =
-    if bits.Length < 8
-    then invalidArg "bits" "The bits shouldn't be less than 8 bit"
-    let size = bits.Length / 8
-    let (current, rest) = List.splitAt (8 * size) bits
-    let bitArr = new BitArray(current |> List.toArray)
-    let _bytes: byte [] = Array.zeroCreate size
-    bitArr.CopyTo(_bytes, 0)
-    _bytes, rest
+    if bits.Length < 8 then
+        invalidArg "bits" "The bits shouldn't be less than 8 bit"
+    else
+        let size = bits.Length / 8
+        let (current, rest) = List.splitAt (8 * size) bits
+        let bitArr = BitArray(current |> List.toArray)
+        let _bytes: byte [] = Array.zeroCreate size
+        bitArr.CopyTo(_bytes, 0)
+        _bytes, rest
+
+let convertBytesToBits (bytes: byte []) =
+    let bitArr = BitArray(bytes)
+    let bits = Array.replicate (8 * bytes.Length) false
+    bitArr.CopyTo(bits, 0)
+    bits |> Array.toList
+
+let convertByteToBits (byte: byte) = convertBytesToBits ([| byte |])
 
 type BitWriter(stream: Stream) =
     let bs = new BinaryWriter(stream)
@@ -34,11 +43,8 @@ type BitWriter(stream: Stream) =
         bits <- bits @ flags
         x.WriteInternal()
 
-    member x.WriteByte(b: byte) =
-        let bitArr = new BitArray([| b |])
-        let flags: bool [] = Array.zeroCreate 8
-        bitArr.CopyTo(flags, 0)
-        bits <- bits @ (flags |> List.ofArray)
+    member x.WriteByte(byte: byte) =
+        bits <- bits @ (convertByteToBits byte)
         x.WriteInternal()
 
     member x.WriteUInt32(i: uint32) =
@@ -49,12 +55,10 @@ type BitWriter(stream: Stream) =
         let _bytes: byte [] = BitConverter.GetBytes(i)
         _bytes |> Seq.iter x.WriteByte
 
-    member _.Complete() =
+    member x.Complete() =
         if (bits.Length > 0) then
-            let bitArr = new BitArray(bits |> List.toArray)
-            let _bytes: byte [] = Array.zeroCreate 1
-            bitArr.CopyTo(_bytes, 0)
-            bs.Write(_bytes)
+            bits <- (bits @ List.replicate 8 false) |> List.take 8
+            x.WriteInternal()
 
     interface IDisposable with
         override x.Dispose() =
@@ -66,11 +70,8 @@ type BitReader(stream: Stream) =
     let mutable bits: bool list = []
 
     let loadBits () =
-        let flags: bool [] = Array.zeroCreate 8
         let _byte = bs.ReadByte()
-        let bitArr = new BitArray([| _byte |])
-        bitArr.CopyTo(flags, 0)
-        bits <- bits @ (flags |> List.ofArray)
+        bits <- bits @ (convertByteToBits _byte)
 
     member _.BaseStream = bs.BaseStream
 

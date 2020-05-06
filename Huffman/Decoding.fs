@@ -48,7 +48,7 @@ module Decoding =
                     | false -> lt
                     | true -> rt
 
-        if originalLength = contentLength then Ok () else Error "Content mismatch"
+        if originalLength = contentLength then Ok() else Error "Content mismatch"
 
     let decodeStream (stream: 'a :> Stream) =
         use temp = new MemoryStream()
@@ -59,14 +59,13 @@ module Decoding =
         use output = new MemoryStream()
         match decodeStream' bitReader output with
         | Ok _ ->
-            let bytes = output.GetBuffer()
+            let bytes = output.ToArray()
             Encoding.UTF8.GetString(bytes) |> Ok
         | Error err -> Error err
 
     let decodeFile (inputFile: string) (outputFile: string) =
         if not (File.Exists inputFile) then
-            sprintf "File %s doesn't exist" inputFile
-            |> Error
+            sprintf "File %s doesn't exist" inputFile |> Error
         else
             use inputStream = new BitReader(File.OpenRead(inputFile))
             use outputStream = File.Create(outputFile) :> Stream

@@ -10,11 +10,7 @@ module Encoding =
     let encodeHuffmanTree (tree: HuffmanTree<byte>) =
         let rec toBytes (tree: HuffmanTree<byte>) =
             match tree with
-            | HTLeaf a ->
-                let bitArr = new BitArray([| a |])
-                let bits = Array.replicate 8 false
-                bitArr.CopyTo(bits, 0)
-                [ true ] @ (bits |> Array.toList)
+            | HTLeaf a -> [ true ] @ (convertByteToBits a)
             | HTNode (lt, rt) -> [ false ] @ toBytes lt @ toBytes rt
 
         toBytes tree
@@ -58,8 +54,9 @@ module Encoding =
         let mutable Break = false
 
         // write encoded content
-        while reader.CanRead && not Break do
+        while reader.Position < reader.Length && not Break do
             let word = byte (reader.ReadByte())
+
             match HuffmanCodeTable.lookup word encodingTable with
             | Some encoding -> writer.WriteBits(encoding |> List.map (fun x -> x.ToBool()))
             | _ -> Break <- true
@@ -79,7 +76,7 @@ module Encoding =
 
             analysisStream input
             |> Result.map (fun result ->
-                let _ = input.Seek(int64 (0), SeekOrigin.Begin)
+                input.Seek(int64 (0), SeekOrigin.Begin) |> ignore
                 encodeStream' input writer result)
 
     let encodeStream (input: 'a :> Stream) =
@@ -87,9 +84,9 @@ module Encoding =
         use writer = new BitWriter(output)
         analysisStream input
         |> Result.map (fun result ->
-            let _ = input.Seek(int64 (0), SeekOrigin.Begin)
+            input.Seek(int64 (0), SeekOrigin.Begin) |> ignore
             encodeStream' input writer result)
-        |> Result.map (fun _ -> output.GetBuffer())
+        |> Result.map (fun _ -> output.ToArray())
 
     let encodeString (input: string) =
         use stream =
